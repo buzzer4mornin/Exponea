@@ -53,3 +53,6 @@ async def api_smart(timeout: int) -> dict:
     return {'time': min(list(data.values()))} if data else \
            {key: value for key, value in error_dict.items()}
 
+
+##
+
