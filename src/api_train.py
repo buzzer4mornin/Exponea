@@ -42,28 +42,30 @@ async def api_smart(timeout: int):
         async with aiohttp.ClientSession(connector=conn, timeout=aiohttp.ClientTimeout(total=timeout / 1000)) as client:
             try:
                 mytask_1 = asyncio.create_task(get_time(client, "request_1"))
-                resp, status, which_request = await asyncio.wait_for(asyncio.shield(mytask_1), timeout=300 / 1000)
+                resp, status, which_request = await asyncio.wait_for(asyncio.shield(mytask_1), timeout=500 / 1000)
                 if status == 200:
                     resp["is_successfull"] = True
                     resp["successfull_request_num"] = which_request
                     resp["message"] = "SUCCESS! First request is SUCCESSFULL within 300 ms - returning its response."
                     return resp
                 else:
-                    mytask_2 = asyncio.create_task(get_time(client, "request_2"))
-                    mytask_3 = asyncio.create_task(get_time(client, "request_3"))
-
-                    for task in asyncio.as_completed([mytask_2, mytask_3]):
-                        earliest_resp, status, which_request = await task
-                        if status == 200:
-                            earliest_resp["is_successfull"] = True
-                            earliest_resp["successfull_request_num"] = which_request
-                            earliest_resp["message"] = \
-                                "SUCCESS! First request FAILED within 300 ms - firing two more requests and " \
-                                "returning the earliest successfull reponse among these  two requests."
-
-                            return earliest_resp
-                    return {"time": None, "is_successfull": False, "successfull_request_num": None,
-                            "message": "ERROR! None of the requests sent were successfull in given timeout."}
+                    raise asyncio.exceptions.TimeoutError
+                    # print("yayyyyyy")
+                    # mytask_2 = asyncio.create_task(get_time(client, "request_2"))
+                    # mytask_3 = asyncio.create_task(get_time(client, "request_3"))
+                    #
+                    # for task in asyncio.as_completed([mytask_2, mytask_3]):
+                    #     earliest_resp, status, which_request = await task
+                    #     if status == 200:
+                    #         earliest_resp["is_successfull"] = True
+                    #         earliest_resp["successfull_request_num"] = which_request
+                    #         earliest_resp["message"] = \
+                    #             "SUCCESS! First request FAILED within 300 ms - firing two more requests and " \
+                    #             "returning the earliest successfull reponse among these  two requests."
+                    #
+                    #         return earliest_resp
+                    # return {"time": None, "is_successfull": False, "successfull_request_num": None,
+                    #         "message": "ERROR! None of the requests sent were successfull in given timeout."}
             except asyncio.exceptions.TimeoutError:
                 mytask_2 = asyncio.create_task(get_time(client, "request_2"))
                 mytask_3 = asyncio.create_task(get_time(client, "request_3"))
