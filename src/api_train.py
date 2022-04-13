@@ -26,6 +26,7 @@ async def get_time(client: aiohttp.ClientSession) -> None:
         return ('Connection timeout error (server timeout)'), response.status
     except httpx.ReadTimeout:
         return (f'Request exceeded timeout period...'), response.status
+
     # Api response internal error
     except json.decoder.JSONDecodeError:
         '''
@@ -33,6 +34,7 @@ async def get_time(client: aiohttp.ClientSession) -> None:
             <Response [429 Too many requests]>
         '''
         return (f'Request has failed. Try again...'), response.status
+
     except aiohttp.client_exceptions.ContentTypeError:
         return ("decoder error"), response.status
 
@@ -48,8 +50,17 @@ async def api_smart(timeout: int):
                 mytask_1 = asyncio.create_task(get_time(client))
                 r, c = await asyncio.wait_for(asyncio.shield(mytask_1), timeout=500/1000)
                 if c == 200:
-                    return r, c, "first"
-            except Exception as e:
+                    return r, c, "FIRST request is SUCCESSFULL within 300 ms - returning its response."
+                else:
+                    mytask_2 = asyncio.create_task(get_time(client))
+                    mytask_3 = asyncio.create_task(get_time(client))
+
+                    for coro in asyncio.as_completed([mytask_2, mytask_3]):
+                        earliest_result, c = await coro
+                        if c == 200:
+                            return earliest_result, c, "FIRST request FAILED within 300 ms - firing two more requests and returning the earliest successfull reponse among these two requests."
+                    return "NO SUCCESSFULL RESULT"
+            except:
                 mytask_2 = asyncio.create_task(get_time(client))
                 mytask_3 = asyncio.create_task(get_time(client))
 
@@ -57,9 +68,10 @@ async def api_smart(timeout: int):
                     earliest_result, c = await coro
                     if c == 200:
                         # client.close() TODO: how?
-                        return earliest_result, c
+                        return earliest_result, c, "FIRST request DID NOT finish within 300 ms - firing two more requests and returning the earliest successfull reponse among all of three requests."
+                return "NO SUCCESSFULL RESULT"
 
-    except asyncio.exceptions.TimeoutError as e:
+    except asyncio.exceptions.TimeoutError:
         return "Timeout Error"
 
 
