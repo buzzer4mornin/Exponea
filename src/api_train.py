@@ -10,22 +10,26 @@ import ssl
 app = FastAPI()
 
 
-async def get_time(client: aiohttp.ClientSession) -> None:
+async def get_time(client: aiohttp.ClientSession, task_num: str):
     try:
-        throttler = Throttler(rate_limit=100, period=15)
-        async with throttler:
-            response = await client.get(
-                    "https://exponea-engineering-assignment.appspot.com/api/work"
-                )
-            #print(response)
-            json_time = await response.json(content_type=None)
+        #throttler = Throttler(rate_limit=100, period=15)
+        #async with throttler:
+        response = await client.get(
+                "https://exponea-engineering-assignment.appspot.com/api/work"
+            )
+        #print(response)
+        json_time = await response.json(content_type=None)
 
-            return json_time, response.status
+        return json_time, response.status, task_num
     # Timeout exception
     except httpx.ConnectTimeout:
-        return ('Connection timeout error (server timeout)'), response.status
+        return 'Connection timeout error (server timeout)', response.status, task_num
+
+    except asyncio.exceptions.TimeoutError:
+        return "Timeout Error...", 999999, task_num
+
     except httpx.ReadTimeout:
-        return (f'Request exceeded timeout period...'), response.status
+        return f'Request exceeded timeout period...', response.status, task_num
 
     # Api response internal error
     except json.decoder.JSONDecodeError:
@@ -33,10 +37,10 @@ async def get_time(client: aiohttp.ClientSession) -> None:
             <Response [500 Internal Server Error]>
             <Response [429 Too many requests]>
         '''
-        return (f'Request has failed. Try again...'), response.status
+        return f'Request has failed. Try again...', response.status, task_num
 
     except aiohttp.client_exceptions.ContentTypeError:
-        return ("decoder error"), response.status
+        return "decoder error", response.status, task_num
 
 
 
@@ -47,31 +51,31 @@ async def api_smart(timeout: int):
     try:
         async with aiohttp.ClientSession(connector=conn, timeout=aiohttp.ClientTimeout(total=timeout / 1000)) as client:
             try:
-                mytask_1 = asyncio.create_task(get_time(client))
-                r, c = await asyncio.wait_for(asyncio.shield(mytask_1), timeout=500/1000)
+                mytask_1 = asyncio.create_task(get_time(client, "task1"))
+                r, c, which_task = await asyncio.wait_for(asyncio.shield(mytask_1), timeout=500/1000)
                 if c == 200:
-                    return r, c, "FIRST request is SUCCESSFULL within 300 ms - returning its response."
+                    return r, c, "FIRST request is SUCCESSFULL within 300 ms - returning its response.", which_task
                 else:
-                    mytask_2 = asyncio.create_task(get_time(client))
-                    mytask_3 = asyncio.create_task(get_time(client))
+                    mytask_2 = asyncio.create_task(get_time(client, "task2"))
+                    mytask_3 = asyncio.create_task(get_time(client, "task3"))
 
                     for coro in asyncio.as_completed([mytask_2, mytask_3]):
-                        earliest_result, c = await coro
+                        earliest_result, c, which_task = await coro
                         if c == 200:
-                            return earliest_result, c, "FIRST request FAILED within 300 ms - firing two more requests and returning the earliest successfull reponse among these two requests."
+                            return earliest_result, c, "FIRST request FAILED within 300 ms - firing two more requests and returning the earliest successfull reponse among these two requests.", which_task
                     return "NO SUCCESSFULL RESULT"
             except:
-                mytask_2 = asyncio.create_task(get_time(client))
-                mytask_3 = asyncio.create_task(get_time(client))
+                mytask_2 = asyncio.create_task(get_time(client, "task2"))
+                mytask_3 = asyncio.create_task(get_time(client, "task3"))
 
                 for coro in asyncio.as_completed([mytask_1, mytask_2, mytask_3]):
-                    earliest_result, c = await coro
+                    earliest_result, c, which_task = await coro
                     if c == 200:
                         # client.close() TODO: how?
-                        return earliest_result, c, "FIRST request DID NOT finish within 300 ms - firing two more requests and returning the earliest successfull reponse among all of three requests."
+                        return earliest_result, c, "FIRST request DID NOT finish within 300 ms - firing two more requests and returning the earliest successfull reponse among all of three requests.", which_task
                 return "NO SUCCESSFULL RESULT"
 
-    except asyncio.exceptions.TimeoutError:
+    except asyncio.exceptions.TimeoutError as e:
         return "Timeout Error"
 
 
