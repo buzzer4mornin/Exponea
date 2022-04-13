@@ -14,11 +14,11 @@ async def get_time(client: aiohttp.ClientSession, request_num: str):
         response = await client.get(
             "https://exponea-engineering-assignment.appspot.com/api/work"
         )
-        #print(response.headers.get('Content-Type'))
-        #print(response.status_code)
+        # print(response.headers.get('Content-Type'))
+        # print(response.status_code)
 
         json_time = await response.json(content_type=None)
-        #header = response.headers.get('Content-Type')
+        # header = response.headers.get('Content-Type')
 
         return json_time, response.status, request_num
 
@@ -57,13 +57,13 @@ async def api_smart(timeout: int):
                         if status == 200:
                             earliest_resp["is_successfull"] = True
                             earliest_resp["successfull_request_num"] = which_request
-                            earliest_resp["message"] = "SUCCESS! First request FAILED within 300 ms - firing two more requests " \
-                                             "and returning the earliest successfull reponse among these  " \
-                                             "two requests.", f"Returning first SUCCESSFULL response."
-
+                            earliest_resp["message"] = \
+                                "SUCCESS! First request FAILED within 300 ms - firing two more requests and " \
+                                "returning the earliest successfull reponse among these  two requests."
 
                             return earliest_resp
-                    return {"time": None, "is_successfull": False, "successfull_request_num": None, "message": "ERROR! None of the requests sent were successfull in given timeout."}
+                    return {"time": None, "is_successfull": False, "successfull_request_num": None,
+                            "message": "ERROR! None of the requests sent were successfull in given timeout."}
             except asyncio.exceptions.TimeoutError:
                 mytask_2 = asyncio.create_task(get_time(client, "request_2"))
                 mytask_3 = asyncio.create_task(get_time(client, "request_3"))
@@ -73,14 +73,15 @@ async def api_smart(timeout: int):
                     if status == 200:
                         earliest_resp["is_successfull"] = True
                         earliest_resp["successfull_request_num"] = which_request
-                        earliest_resp[
-                            "message"] = "SUCCESS! First request DID NOT finish within 300 ms - firing two more " \
-                                         "requests and returning the earliest successfull reponse among all of three " \
-                                         "requests. Returning first SUCCESSFULL response."
+                        earliest_resp["message"] = \
+                            "SUCCESS! First request DID NOT finish within 300 ms - firing two more " \
+                            "requests and returning the earliest successfull reponse among all three requests."
 
                         # client.close() TODO: how?
                         return earliest_resp
-                return {"time": None, "is_successfull": False, "successfull_request_num": None, "message": "ERROR! None of the requests sent were successfull in given timeout."}
+                return {"time": None, "is_successfull": False, "successfull_request_num": None,
+                        "message": "ERROR! None of the requests sent were successfull in given timeout."}
 
     except asyncio.exceptions.TimeoutError:
-        return {"time": None, "is_successfull": False, "successfull_request_num": None, "message": "ERROR! Timeout exceeded."}
+        return {"time": None, "is_successfull": False, "successfull_request_num": None,
+                "message": "ERROR! Timeout exceeded."}
