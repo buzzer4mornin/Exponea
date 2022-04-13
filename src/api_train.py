@@ -2,13 +2,12 @@ import json
 import aiohttp
 import httpx
 import asyncio
-from fastapi import FastAPI
 import certifi
-from asyncio_throttle import Throttler
 import ssl
+from fastapi import FastAPI
+from asyncio_throttle import Throttler
 
 app = FastAPI()
-
 
 async def get_time(client: aiohttp.ClientSession, request_num: str):
     try:
@@ -21,12 +20,6 @@ async def get_time(client: aiohttp.ClientSession, request_num: str):
         json_time = await response.json(content_type=None)
 
         return json_time, response.status, request_num
-    # Timeout exception
-    except httpx.ConnectTimeout:
-        return 'Connection timeout error (server timeout)', response.status, request_num
-
-    except httpx.ReadTimeout:
-        return f'Request exceeded timeout period...', response.status, request_num
 
     # Api response internal error
     except json.decoder.JSONDecodeError:
@@ -48,7 +41,7 @@ async def api_smart(timeout: int):
         async with aiohttp.ClientSession(connector=conn, timeout=aiohttp.ClientTimeout(total=timeout / 1000)) as client:
             try:
                 mytask_1 = asyncio.create_task(get_time(client, "request_1"))
-                r, c, which_request = await asyncio.wait_for(asyncio.shield(mytask_1), timeout=500 / 1000)
+                r, c, which_request = await asyncio.wait_for(asyncio.shield(mytask_1), timeout=1 / 1000)
                 if c == 200:
                     r["request_num"] = which_request
                     return "FIRST request is SUCCESSFULL within 300 ms - returning its response.", f"Returning " \
@@ -67,7 +60,7 @@ async def api_smart(timeout: int):
                                    "and returning the earliest successfull reponse among these " \
                                    "two requests.", f"Returning first SUCCESSFULL response:", earliest_result
                     return "NO SUCCESSFULL RESULT"
-            except:
+            except asyncio.exceptions.TimeoutError:
                 mytask_2 = asyncio.create_task(get_time(client, "request_2"))
                 mytask_3 = asyncio.create_task(get_time(client, "request_3"))
 
@@ -82,37 +75,8 @@ async def api_smart(timeout: int):
                 print("two")
                 return "NO SUCCESSFULL RESULT"
 
-    except asyncio.exceptions.TimeoutError as e:
+    except asyncio.exceptions.TimeoutError:
         return "Timeout Error"
 
-        # await asyncio.sleep(4)
-        # print(r)
-
-        # tasks = [mytask_2, mytask_1]
-        # r_1 = await mytask_1
-        # return mytask_1.done()
-
-        # print(len(done), len(pending))
-
-        # r_2 = await mytask_2
-
-        # for coro in asyncio.as_completed(tasks):
-        #    s = await coro
-        #    print(s)
-        # return r, mytask.done()
-        # result = await mytask
-        # return result
-    #
-    #     if 1 in data:
-    #         if data[1] < 300:
-    #             return {'time': data[1]}
-    #
-    #     await asyncio.gather(
-    #         get_time(2, data, error_dict, timeout),
-    #         get_time(3, data, error_dict, timeout)
-    #     )
-    #
-    # print(data)
-    # return {'time': min(list(data.values()))} if data else \
-    #        {key: value for key, value in error_dict.items()}
-##
+    except aiohttp.client_exceptions.ClientOSError:
+        print("hihihihi")
