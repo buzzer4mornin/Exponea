@@ -14,9 +14,13 @@ async def get_time(client: aiohttp.ClientSession, request_num: str):
         response = await client.get(
             "https://exponea-engineering-assignment.appspot.com/api/work"
         )
-        json_time = await response.json(content_type=None)
+        #print(response.headers.get('Content-Type'))
+        #print(response.status_code)
 
-        return json_time, response.status, request_num
+        json_time = await response.json(content_type=None)
+        header = response.headers.get('Content-Type')
+
+        return json_time, response.status, header, request_num
 
     # Api response internal error
     except json.decoder.JSONDecodeError:
@@ -38,35 +42,38 @@ async def api_smart(timeout: int):
         async with aiohttp.ClientSession(connector=conn, timeout=aiohttp.ClientTimeout(total=timeout / 1000)) as client:
             try:
                 mytask_1 = asyncio.create_task(get_time(client, "request_1"))
-                resp, status, which_request = await asyncio.wait_for(asyncio.shield(mytask_1), timeout=1000 / 1000)
+                resp, status, header, which_request = await asyncio.wait_for(asyncio.shield(mytask_1), timeout=300 / 1000)
+                print(header, status)
                 if status == 200:
-                    resp["request_num"] = which_request
-                    return "FIRST request is SUCCESSFULL within 300 ms - returning its response.", \
-                           f"Returning first SUCCESSFULL response: ", resp
+                    resp["successfull_request_num"] = which_request
+                    resp["message"] = "FIRST request is SUCCESSFULL within 300 ms - returning its response."
+                    return resp
                 else:
                     mytask_2 = asyncio.create_task(get_time(client, "request_2"))
                     mytask_3 = asyncio.create_task(get_time(client, "request_3"))
 
                     for task in asyncio.as_completed([mytask_2, mytask_3]):
-                        earliest_resp, status, which_request = await task
+                        earliest_resp, status, header, which_request = await task
+                        print(header, status)
                         if status == 200:
-                            earliest_resp["request_num"] = which_request
-                            return "FIRST request FAILED within 300 ms - firing two more requests " \
-                                   "and returning the earliest successfull reponse among these " \
-                                   "two requests.", f"Returning first SUCCESSFULL response:", earliest_resp
+                            earliest_resp["successfull_request_num"] = which_request
+                            earliest_resp["message"] = "FIRST request FAILED within 300 ms - firing two more requests " \
+                                                       "and returning the earliest successfull reponse among these  " \
+                                                       "two requests.", f"Returning first SUCCESSFULL response: "
+                            return earliest_resp
                     return "Ops! None of the requests sent were successfull in given timeout."
             except asyncio.exceptions.TimeoutError:
                 mytask_2 = asyncio.create_task(get_time(client, "request_2"))
                 mytask_3 = asyncio.create_task(get_time(client, "request_3"))
 
                 for task in asyncio.as_completed([mytask_1, mytask_2, mytask_3]):
-                    earliest_resp, status, which_request = await task
+                    earliest_resp, status, header, which_request = await task
+                    print(header, status)
                     if status == 200:
-                        earliest_resp["request_num"] = which_request
+                        earliest_resp["successfull_request_num"] = which_request
+                        earliest_resp["message"] = "FIRST request DID NOT finish within 300 ms - firing two more requests and returning the earliest successfull reponse among all of three requests. Returning first SUCCESSFULL response:"
                         # client.close() TODO: how?
-                        return "FIRST request DID NOT finish within 300 ms - firing two more " \
-                               "requests and returning the earliest successfull reponse among all" \
-                               " of three requests.", f"Returning first SUCCESSFULL response:", earliest_resp
+                        return earliest_resp
                 return "Ops! None of the requests sent were successfull in given timeout."
 
     except asyncio.exceptions.TimeoutError:
