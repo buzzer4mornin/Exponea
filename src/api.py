@@ -5,7 +5,7 @@ import asyncio
 import certifi
 import ssl
 from fastapi import FastAPI
-
+from time import time
 app = FastAPI()
 
 
@@ -20,7 +20,7 @@ async def send_request(client: aiohttp.ClientSession, request_num: str):
         return json_time, request_num
 
     except asyncio.exceptions.TimeoutError:
-        return 'TimeoutError', request_num
+        return 'Timeout Error', request_num
 
     except aiohttp.client_exceptions.ClientConnectionError:
         return 'Connection closed', request_num
@@ -45,7 +45,7 @@ async def send_request(client: aiohttp.ClientSession, request_num: str):
 
     # Other kind of errors (e.g, coming from Exponea)?
     except:
-        return 'All other unknown errors', request_num
+        return "Unknown Error", request_num
 
 
 @app.get("/api/smart/{timeout}")
@@ -55,15 +55,17 @@ async def api_smart(timeout: int) -> dict:
     flag = False
     async with aiohttp.ClientSession(connector=conn, timeout=aiohttp.ClientTimeout(total=timeout / 1000)) as client:
         try:
+            # start = time()
             mytask_1 = asyncio.create_task(send_request(client, "request_1"))
             print("Fired first request and waiting 300ms for its response..")
-            resp, which_request = await asyncio.wait_for(asyncio.shield(mytask_1), timeout=300 / 1000)
+            resp, which_request = await asyncio.wait_for(asyncio.shield(mytask_1), timeout=1000 / 1000)
             if type(resp) is dict:  # i.e., if response status is 200
                 print("First request is SUCCESSFUL within 300ms.")
                 print(which_request, "--->", resp)
                 resp["status"] = "SUCCESS"
                 return resp
             else:
+                # time_spent = int((time() - start)*1000)
                 flag = True
                 print("First request is NOT SUCCESSFUL within 300ms.")
                 print(which_request, "--->", resp)
@@ -72,8 +74,8 @@ async def api_smart(timeout: int) -> dict:
             if flag:
                 print("Firing two other requests and waiting for first successful response.")
             else:
-                print("300ms timeout exceeded with no response from first request."
-                      " Firing two other requests and waiting for first successful response.")
+                print("300ms timeout exceeded with no response from first request.")
+                print("Firing two other requests and waiting for first successful response..")
             mytask_2 = asyncio.create_task(send_request(client, "request_2"))
             mytask_3 = asyncio.create_task(send_request(client, "request_3"))
 
@@ -85,4 +87,5 @@ async def api_smart(timeout: int) -> dict:
                 if type(earliest_resp) is dict:  # i.e., if response status is 200
                     earliest_resp["status"] = "SUCCESS"
                     return earliest_resp
+            print("None of 3 requests is successfull!")
             return {"status": "ERROR"}
