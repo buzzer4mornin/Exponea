@@ -58,17 +58,19 @@ async def api_smart(timeout: int) -> dict:
     async with aiohttp.ClientSession(connector=conn, timeout=aiohttp.ClientTimeout(total=timeout / 1000)) as client:
         try:
             mytask_1 = asyncio.create_task(send_request(client, "request_1"))
+            print("Fired first request and waiting for its response...")
             resp, status, which_request = await asyncio.wait_for(asyncio.shield(mytask_1), timeout=1000 / 1000)
             if status == 200:
+                print("First request is SUCCESSFUL within 300ms.")
                 print(which_request, "--->", status)
-                resp["is_successfull"] = True
-                resp["response_1"] = which_request
-                resp["message"] = "First request was SUCCESSFULL (it had status code 200) within 500 ms"
+                resp["status"] = "SUCCESS"
                 return resp
             else:
-                print(which_request, "--->", status)
+                print("First request is NOT SUCCESSFUL within 300ms.")
+                print(which_request, "--->", resp)
                 raise asyncio.exceptions.TimeoutError
         except asyncio.exceptions.TimeoutError:
+            print("Firing two other requests...")
             mytask_2 = asyncio.create_task(send_request(client, "request_2"))
             mytask_3 = asyncio.create_task(send_request(client, "request_3"))
 
@@ -77,17 +79,16 @@ async def api_smart(timeout: int) -> dict:
                 earliest_resp, status, which_request = await task
                 print(which_request, "--->", status)
                 if status == 200:
-                    earliest_resp["is_successfull"] = True
-                    earliest_resp["successfull_request_num"] = which_request
-                    earliest_resp["message"] = \
-                        "First request either finished unsuccessfully with non-200 status code or it didn't still finish within 300 ms " \
-                        "- fired two more requests and returned the earliest successfull reponse among all three requests."
-                    # client.close() TODO: how?
+                    if which_request == "request_1":
+                        pass
+                        #print("First request did not finish within 300ms. Fired two more requests.")
+                    earliest_resp["status"] = "SUCCESS"
                     return earliest_resp
-            return {"is_successfull": False,
-                    "message": "ERROR! There was no successful response within endpoint's timeout."}  # either couldnt fire, or all failed
-
-
+            return {"status": "ERROR"}
+            # {"message": "ERROR! There was no successful response within endpoint's timeout."}  # either couldnt fire, or all failed
+            # resp["message"] = "First request was SUCCESSFULL (it had status code 200) within 500 ms"
+            #"First request either finished unsuccessfully with non-200 status code or it didn't still finish within 300 ms " \
+            #"- fired two more requests and returned the earliest successfull reponse among all three requests."
 #
 # @app.get("/api/smart/{timeout}")
 # async def api_smart(timeout: int):
