@@ -17,8 +17,7 @@ async def send_request(connector: aiohttp.TCPConnector, timeout: int, request_nu
             )
 
             json_time = await response.json(content_type=None)
-
-        return json_time, request_num
+            return json_time, request_num
 
     except asyncio.exceptions.TimeoutError:
         return 'Timeout Error', request_num
@@ -58,8 +57,8 @@ async def api_smart(total_timeout: int) -> dict:
         start = time()
         time_spent = 300
         mytask_1 = asyncio.create_task(send_request(connector=conn, timeout=aiohttp.ClientTimeout(total=total_timeout / 1000), request_num="request_1"))
-        print("Fired first request and waiting 300ms for its response..")
         resp, which_request = await asyncio.wait_for(asyncio.shield(mytask_1), timeout=1000 / 1000)
+        print("Fired first request and waiting 300ms for its response..")
 
         if type(resp) is dict:  # i.e., if response status is 200
             print("First request is SUCCESSFUL within 300ms.")
