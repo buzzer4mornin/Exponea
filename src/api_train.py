@@ -23,16 +23,16 @@ async def SEND_REQUEST(client: aiohttp.ClientSession, request_num: str):
         return json_time, response.status, request_num
 
     except asyncio.exceptions.TimeoutError:
-        return f'Timeout occured', 1, request_num
+        return 'Timeout occured', 1, request_num
 
     except aiohttp.client_exceptions.ClientConnectionError:
-        return f'Connection closed', 2, request_num
+        return 'Connection closed', 2, request_num
 
     except aiohttp.client_exceptions.ClientOSError:
-        return f'ClientOSError', 3, request_num
+        return 'ClientOSError', 3, request_num
 
     except asyncio.exceptions.CancelledError:
-        return f'Task got cancelled', 4, request_num
+        return 'Task got cancelled', 4, request_num
 
     # Api response internal error
     except json.decoder.JSONDecodeError:
@@ -40,11 +40,14 @@ async def SEND_REQUEST(client: aiohttp.ClientSession, request_num: str):
             <Response [500 Internal Server Error]>
             <Response [429 Too many requests]>
         '''
-        return f'Server side error', 5, request_num
+        return 'Server side error', 5, request_num
 
     # When failing to decode JSON
     except aiohttp.client_exceptions.ContentTypeError:
         return 'JSON decode failed', 6, request_num
+
+    except:
+        return 'Other unknown errors'
 
 
 @app.get("/api/smart/{timeout}")
@@ -58,7 +61,8 @@ async def api_smart(timeout: int) -> dict:
             if status == 200:
                 resp["is_successfull"] = True
                 resp["successfull_request_num"] = which_request
-                resp["message"] = "First request was SUCCESSFULL (it had status code 200) within 300 ms - returning its response."
+                resp[
+                    "message"] = "First request was SUCCESSFULL (it had status code 200) within 300 ms - returning its response."
                 return resp
             else:
                 raise asyncio.exceptions.TimeoutError
@@ -69,6 +73,7 @@ async def api_smart(timeout: int) -> dict:
             for task in asyncio.as_completed(
                     [mytask_1, mytask_2, mytask_3]):
                 earliest_resp, status, which_request = await task
+                print(status)
                 if status == 200:
                     earliest_resp["is_successfull"] = True
                     earliest_resp["successfull_request_num"] = which_request
@@ -78,4 +83,4 @@ async def api_smart(timeout: int) -> dict:
                     # client.close() TODO: how?
                     return earliest_resp
             return {"is_successfull": False,
-                    "message": "ERROR! There is no successful response within endpoint's timeout."}
+                    "message": "ERROR! There is no successful response within endpoint's timeout."}  # either couldnt fire, or all failed
