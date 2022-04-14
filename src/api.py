@@ -57,7 +57,7 @@ async def api_smart(timeout: int) -> dict:
         try:
             mytask_1 = asyncio.create_task(send_request(client, "request_1"))
             print("Fired first request and waiting 300ms for its response..")
-            resp, which_request = await asyncio.wait_for(asyncio.shield(mytask_1), timeout=1000 / 1000)
+            resp, which_request = await asyncio.wait_for(asyncio.shield(mytask_1), timeout=300 / 1000)
             if type(resp) is dict:  # i.e., if response status is 200
                 print("First request is SUCCESSFUL within 300ms.")
                 print(which_request, "--->", resp)
