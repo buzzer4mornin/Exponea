@@ -49,9 +49,16 @@ async def send_request(connector: aiohttp.TCPConnector, timeout: int, request_nu
 
 
 @app.get("/api/smart/{ENDPOINT_TIMEOUT}")
-async def api_smart(ENDPOINT_TIMEOUT: int) -> dict:
+async def api_smart(ENDPOINT_TIMEOUT) -> dict:
+    try:
+        int(ENDPOINT_TIMEOUT)
+    except:
+        return {"message": "Endpoint timeout parameter should be INTEGER"}
+
+    ENDPOINT_TIMEOUT = int(ENDPOINT_TIMEOUT)
     if ENDPOINT_TIMEOUT <= 300:
-        return {"message": "Endpoint timeout parameter should be above 300."}
+        return {"message": "Endpoint timeout parameter should be above 300"}
+
     # default is 300ms
     time_spent = 300
     # bool to check if first request is finished and NOT SUCCESSFUL within 300ms
@@ -60,9 +67,9 @@ async def api_smart(ENDPOINT_TIMEOUT: int) -> dict:
         print("Fired first request and waiting 300ms for its response..")
         ssl_context = ssl.create_default_context(cafile=certifi.where())
         conn_1 = aiohttp.TCPConnector(ssl=ssl_context)
-        mytask_1 = asyncio.create_task(send_request(connector=conn_1, timeout=aiohttp.ClientTimeout(total=ENDPOINT_TIMEOUT / 1000), request_num="request_1"))
+        request_1 = asyncio.create_task(send_request(connector=conn_1, timeout=aiohttp.ClientTimeout(total=ENDPOINT_TIMEOUT / 1000), request_num="request_1"))
         start = time()
-        resp, status, which_request = await asyncio.wait_for(asyncio.shield(mytask_1), timeout=300 / 1000)
+        resp, status, which_request = await asyncio.wait_for(asyncio.shield(request_1), timeout=300 / 1000)
         if status == 200:
             print("First request is SUCCESSFUL within 300ms.")
             print(which_request, "--->", resp)
@@ -84,11 +91,11 @@ async def api_smart(ENDPOINT_TIMEOUT: int) -> dict:
         ssl_context_3 = ssl.create_default_context(cafile=certifi.where())
         conn_2 = aiohttp.TCPConnector(ssl=ssl_context_2)
         conn_3 = aiohttp.TCPConnector(ssl=ssl_context_3)
-        mytask_2 = asyncio.create_task(send_request(connector=conn_2, timeout=aiohttp.ClientTimeout(total=(ENDPOINT_TIMEOUT - time_spent) / 1000), request_num="request_2"))
-        mytask_3 = asyncio.create_task(send_request(connector=conn_3, timeout=aiohttp.ClientTimeout(total=(ENDPOINT_TIMEOUT - time_spent) / 1000), request_num="request_3"))
+        request_2 = asyncio.create_task(send_request(connector=conn_2, timeout=aiohttp.ClientTimeout(total=(ENDPOINT_TIMEOUT - time_spent) / 1000), request_num="request_2"))
+        request_3 = asyncio.create_task(send_request(connector=conn_3, timeout=aiohttp.ClientTimeout(total=(ENDPOINT_TIMEOUT - time_spent) / 1000), request_num="request_3"))
 
-        for task in asyncio.as_completed([mytask_1, mytask_2, mytask_3]):
-            earliest_resp, status, which_request = await task
+        for request in asyncio.as_completed([request_1, request_2, request_3]):
+            earliest_resp, status, which_request = await request
             if (which_request == "request_1" and flag is not True) or which_request != "request_1":
                 print(which_request, "--->", earliest_resp)
             if status == 200:
