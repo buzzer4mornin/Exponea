@@ -48,8 +48,8 @@ async def send_request(connector: aiohttp.TCPConnector, timeout: int, request_nu
         return str(e), request_num
 
 
-@app.get("/api/smart/{total_timeout}")
-async def api_smart(total_timeout: int) -> dict:
+@app.get("/api/smart/{ENDPOINT_TIMEOUT}")
+async def api_smart(ENDPOINT_TIMEOUT: int) -> dict:
     ssl_context = ssl.create_default_context(cafile=certifi.where())
     conn = aiohttp.TCPConnector(ssl=ssl_context)
     time_spent = 300  # default is 300ms
@@ -57,7 +57,7 @@ async def api_smart(total_timeout: int) -> dict:
     all_responses = []  # collect all available responses
     try:
         print("Fired first request and waiting 300ms for its response..")
-        mytask_1 = asyncio.create_task(send_request(connector=conn, timeout=aiohttp.ClientTimeout(total=total_timeout / 1000), request_num="request_1"))
+        mytask_1 = asyncio.create_task(send_request(connector=conn, timeout=aiohttp.ClientTimeout(total=ENDPOINT_TIMEOUT / 1000), request_num="request_1"))
         start = time()
         resp, status, which_request = await asyncio.wait_for(asyncio.shield(mytask_1), timeout=300 / 1000)
         all_responses.append(resp)
@@ -84,8 +84,8 @@ async def api_smart(total_timeout: int) -> dict:
         conn_2 = aiohttp.TCPConnector(ssl=ssl_context_2)
         conn_3 = aiohttp.TCPConnector(ssl=ssl_context_3)
 
-        mytask_2 = asyncio.create_task(send_request(connector=conn_2, timeout=aiohttp.ClientTimeout(total=(total_timeout - time_spent) / 1000), request_num="request_2"))
-        mytask_3 = asyncio.create_task(send_request(connector=conn_3, timeout=aiohttp.ClientTimeout(total=(total_timeout - time_spent) / 1000), request_num="request_3"))
+        mytask_2 = asyncio.create_task(send_request(connector=conn_2, timeout=aiohttp.ClientTimeout(total=(ENDPOINT_TIMEOUT - time_spent) / 1000), request_num="request_2"))
+        mytask_3 = asyncio.create_task(send_request(connector=conn_3, timeout=aiohttp.ClientTimeout(total=(ENDPOINT_TIMEOUT - time_spent) / 1000), request_num="request_3"))
 
         for task in asyncio.as_completed([mytask_1, mytask_2, mytask_3]):
             earliest_resp, status, which_request = await task
@@ -93,7 +93,7 @@ async def api_smart(total_timeout: int) -> dict:
             if (which_request == "request_1" and flag is not True) or which_request != "request_1":
                 print(which_request, "--->", earliest_resp)
             if status == 200:  # i.e., if response status is 200
-                print(all_responses)
+                #print(all_responses)
                 earliest_resp["status"] = "SUCCESS"
                 return earliest_resp
 
