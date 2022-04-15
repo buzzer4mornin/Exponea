@@ -1,3 +1,5 @@
+import attr
+from ratelimiter import RateLimiter
 import json
 import aiohttp
 import asyncio
@@ -61,7 +63,7 @@ async def api_smart(ENDPOINT_TIMEOUT) -> dict:
     try:
         # Fired first request and waiting 300ms for its response..
         ssl_context = ssl.create_default_context(cafile=certifi.where())
-        conn_1 = aiohttp.TCPConnector(ssl=ssl_context)
+        conn_1 = aiohttp.TCPConnector(limit=100, ssl=ssl_context)
         request_1 = asyncio.create_task(
             send_request(connector=conn_1, timeout=aiohttp.ClientTimeout(total=ENDPOINT_TIMEOUT / 1000),
                          request_num="request_1"))
@@ -80,8 +82,8 @@ async def api_smart(ENDPOINT_TIMEOUT) -> dict:
         # Either {300ms timeout exceeded with no response from first request.} or {First request finished but is NOT SUCCESSFUL within 300ms.}
         ssl_context_2 = ssl.create_default_context(cafile=certifi.where())
         ssl_context_3 = ssl.create_default_context(cafile=certifi.where())
-        conn_2 = aiohttp.TCPConnector(ssl=ssl_context_2)
-        conn_3 = aiohttp.TCPConnector(ssl=ssl_context_3)
+        conn_2 = aiohttp.TCPConnector(limit=100, ssl=ssl_context_2)
+        conn_3 = aiohttp.TCPConnector(limit=100, ssl=ssl_context_3)
         request_2 = asyncio.create_task(
             send_request(connector=conn_2, timeout=aiohttp.ClientTimeout(total=(ENDPOINT_TIMEOUT - time_spent) / 1000),
                          request_num="request_2"))
