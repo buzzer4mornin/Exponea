@@ -44,7 +44,8 @@ async def send_request(connector: aiohttp.TCPConnector, timeout: int, request_nu
         return 'JSON decode failed', request_num
 
     # Other kind of errors (e.g, coming from Exponea)?
-    except BaseException as e:
+    except Exception as e:
+        print("=============================>>>>>>>>>>>>", e)
         return str(e), request_num
 
 
@@ -57,8 +58,8 @@ async def api_smart(total_timeout: int) -> dict:
         start = time()
         time_spent = 300
         mytask_1 = asyncio.create_task(send_request(connector=conn, timeout=aiohttp.ClientTimeout(total=total_timeout / 1000), request_num="request_1"))
-        resp, which_request = await asyncio.wait_for(asyncio.shield(mytask_1), timeout=1000 / 1000)
         print("Fired first request and waiting 300ms for its response..")
+        resp, which_request = await asyncio.wait_for(asyncio.shield(mytask_1), timeout=1000 / 1000)
 
         if type(resp) is dict:  # i.e., if response status is 200
             print("First request is SUCCESSFUL within 300ms.")
@@ -77,8 +78,13 @@ async def api_smart(total_timeout: int) -> dict:
         else:
             print("300ms timeout exceeded with no response from first request.")
             print("Firing two other requests and waiting for first successful response..")
-        mytask_2 = asyncio.create_task(send_request(connector=conn, timeout=aiohttp.ClientTimeout(total=(total_timeout - time_spent) / 1000), request_num="request_2"))
-        mytask_3 = asyncio.create_task(send_request(connector=conn, timeout=aiohttp.ClientTimeout(total=(total_timeout - time_spent) / 1000), request_num="request_3"))
+        ssl_context_2 = ssl.create_default_context(cafile=certifi.where())
+        ssl_context_3 = ssl.create_default_context(cafile=certifi.where())
+        conn_2 = aiohttp.TCPConnector(ssl=ssl_context_2)
+        conn_3 = aiohttp.TCPConnector(ssl=ssl_context_3)
+
+        mytask_2 = asyncio.create_task(send_request(connector=conn_2, timeout=aiohttp.ClientTimeout(total=(total_timeout - time_spent) / 1000), request_num="request_2"))
+        mytask_3 = asyncio.create_task(send_request(connector=conn_3, timeout=aiohttp.ClientTimeout(total=(total_timeout - time_spent) / 1000), request_num="request_3"))
 
         for task in asyncio.as_completed(
                 [mytask_1, mytask_2, mytask_3]):
@@ -88,7 +94,5 @@ async def api_smart(total_timeout: int) -> dict:
             if type(earliest_resp) is dict:  # i.e., if response status is 200
                 earliest_resp["status"] = "SUCCESS"
                 return earliest_resp
-            elif earliest_resp == "Timeout Error":
-                return {"status": "ERROR"}
         print("None of 3 requests is successfull!")
         return {"status": "ERROR"}
