@@ -50,11 +50,15 @@ async def send_request(connector: aiohttp.TCPConnector, timeout: int, request_nu
 
 @app.get("/api/smart/{ENDPOINT_TIMEOUT}")
 async def api_smart(ENDPOINT_TIMEOUT: int) -> dict:
+    if ENDPOINT_TIMEOUT <= 300:
+        return {"message": "Endpoint timeout parameter should be above 300."}
     ssl_context = ssl.create_default_context(cafile=certifi.where())
     conn = aiohttp.TCPConnector(ssl=ssl_context)
-    time_spent = 300  # default is 300ms
-    flag = False  # bool to check if first request is finished and NOT SUCCESSFUL within 300ms
-    all_responses = []  # collect all available responses
+    # default is 300ms
+    time_spent = 300
+    # bool to check if first request is finished, but NOT SUCCESSFUL within 300ms
+    flag = False
+    all_responses = []  # to collect all available responses
     try:
         print("Fired first request and waiting 300ms for its response..")
         mytask_1 = asyncio.create_task(send_request(connector=conn, timeout=aiohttp.ClientTimeout(total=ENDPOINT_TIMEOUT / 1000), request_num="request_1"))
@@ -65,7 +69,7 @@ async def api_smart(ENDPOINT_TIMEOUT: int) -> dict:
             print("First request is SUCCESSFUL within 300ms.")
             print(which_request, "--->", resp)
             print(all_responses)
-            resp["status"] = "SUCCESS"
+            resp["message"] = "SUCCESS"
             return resp
         else:
             time_spent = int((time() - start)*1000)
@@ -83,7 +87,7 @@ async def api_smart(ENDPOINT_TIMEOUT: int) -> dict:
         ssl_context_3 = ssl.create_default_context(cafile=certifi.where())
         conn_2 = aiohttp.TCPConnector(ssl=ssl_context_2)
         conn_3 = aiohttp.TCPConnector(ssl=ssl_context_3)
-
+        #print(ENDPOINT_TIMEOUT - time_spent)
         mytask_2 = asyncio.create_task(send_request(connector=conn_2, timeout=aiohttp.ClientTimeout(total=(ENDPOINT_TIMEOUT - time_spent) / 1000), request_num="request_2"))
         mytask_3 = asyncio.create_task(send_request(connector=conn_3, timeout=aiohttp.ClientTimeout(total=(ENDPOINT_TIMEOUT - time_spent) / 1000), request_num="request_3"))
 
@@ -98,5 +102,5 @@ async def api_smart(ENDPOINT_TIMEOUT: int) -> dict:
                 return earliest_resp
 
         print("ERROR! There is no successfull response within ENDPOINT_TIMEOUT!")
-        return {"status": "ERROR"}
+        return {"message": "ERROR"}
 
