@@ -64,6 +64,7 @@ async def api_smart(ENDPOINT_TIMEOUT: int) -> dict:
         # Fired first request and waiting 300ms for its response..
         ssl_context = ssl.create_default_context(cafile=certifi.where())
         conn_1 = aiohttp.TCPConnector(limit=100, ssl=ssl_context)
+
         request_1 = asyncio.create_task(
             send_request(connector=conn_1, timeout=aiohttp.ClientTimeout(total=ENDPOINT_TIMEOUT / 1000)))
         start = time()
