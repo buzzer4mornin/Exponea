@@ -52,24 +52,25 @@ async def send_request(connector: aiohttp.TCPConnector, timeout: int, request_nu
 async def api_smart(total_timeout: int) -> dict:
     ssl_context = ssl.create_default_context(cafile=certifi.where())
     conn = aiohttp.TCPConnector(ssl=ssl_context)
+    time_spent = 300  # default is 300ms
+    flag = False  # bool to check if first request is finished and NOT SUCCESSFUL within 300ms
+    all_responses = []  # collect all available responses
     try:
-        time_spent = 300
-        flag = False
-
         print("Fired first request and waiting 300ms for its response..")
-        start = time()
         mytask_1 = asyncio.create_task(send_request(connector=conn, timeout=aiohttp.ClientTimeout(total=total_timeout / 1000), request_num="request_1"))
-        resp, status, which_request = await asyncio.wait_for(asyncio.shield(mytask_1), timeout=1000 / 1000)
-
-        if status == 200:  # i.e., if response status is 200
+        start = time()
+        resp, status, which_request = await asyncio.wait_for(asyncio.shield(mytask_1), timeout=300 / 1000)
+        all_responses.append(resp)
+        if status == 200:  # i.e., if first request's response status is 200
             print("First request is SUCCESSFUL within 300ms.")
             print(which_request, "--->", resp)
+            print(all_responses)
             resp["status"] = "SUCCESS"
             return resp
         else:
             time_spent = int((time() - start)*1000)
             flag = True
-            print("First request is NOT SUCCESSFUL within 300ms.")
+            print("First request finished but is NOT SUCCESSFUL within 300ms.")
             print(which_request, "--->", resp)
             raise asyncio.exceptions.TimeoutError
     except asyncio.exceptions.TimeoutError:
@@ -88,11 +89,14 @@ async def api_smart(total_timeout: int) -> dict:
 
         for task in asyncio.as_completed([mytask_1, mytask_2, mytask_3]):
             earliest_resp, status, which_request = await task
+            all_responses.append(earliest_resp)
             if (which_request == "request_1" and flag is not True) or which_request != "request_1":
                 print(which_request, "--->", earliest_resp)
             if status == 200:  # i.e., if response status is 200
+                print(all_responses)
                 earliest_resp["status"] = "SUCCESS"
                 return earliest_resp
-        print("ERROR! None of 3 requests is successfull!")
+
+        print("ERROR! There is no successfull response within ENDPOINT_TIMEOUT!")
         return {"status": "ERROR"}
 
