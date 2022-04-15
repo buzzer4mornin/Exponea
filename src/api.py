@@ -55,9 +55,10 @@ async def api_smart(total_timeout: int) -> dict:
     try:
         time_spent = 300
         flag = False
-        mytask_1 = asyncio.create_task(send_request(connector=conn, timeout=aiohttp.ClientTimeout(total=total_timeout / 1000), request_num="request_1"))
+
         print("Fired first request and waiting 300ms for its response..")
         start = time()
+        mytask_1 = asyncio.create_task(send_request(connector=conn, timeout=aiohttp.ClientTimeout(total=total_timeout / 1000), request_num="request_1"))
         resp, status, which_request = await asyncio.wait_for(asyncio.shield(mytask_1), timeout=1000 / 1000)
 
         if status == 200:  # i.e., if response status is 200
