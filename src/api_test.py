@@ -2,7 +2,7 @@ from httpx import AsyncClient
 from fastapi.testclient import TestClient
 import pytest
 
-from api_train import app
+from api import app
 
 client = TestClient(app)
 
