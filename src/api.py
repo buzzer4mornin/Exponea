@@ -51,11 +51,10 @@ async def send_request(connector: aiohttp.TCPConnector, timeout: int, request_nu
 @app.get("/api/smart/{ENDPOINT_TIMEOUT}")
 async def api_smart(ENDPOINT_TIMEOUT) -> dict:
     try:
-        int(ENDPOINT_TIMEOUT)
-    except:
+        ENDPOINT_TIMEOUT = int(ENDPOINT_TIMEOUT)
+    except ValueError:
         return {"message": "Endpoint timeout parameter should be INTEGER"}
 
-    ENDPOINT_TIMEOUT = int(ENDPOINT_TIMEOUT)
     if ENDPOINT_TIMEOUT <= 300:
         return {"message": "Endpoint timeout parameter should be above 300"}
 
