@@ -31,7 +31,6 @@ async def send_request(connector: aiohttp.TCPConnector, timeout: int, request_nu
     except asyncio.exceptions.CancelledError:
         return 'Task got cancelled', 0, request_num
 
-    # Api response internal error
     except json.decoder.JSONDecodeError:
         '''
             <Response [500 Internal Server Error]>
@@ -39,11 +38,9 @@ async def send_request(connector: aiohttp.TCPConnector, timeout: int, request_nu
         '''
         return 'Exponea server error [500 or 429]', 0, request_num
 
-    # When failing to decode JSON
     except aiohttp.client_exceptions.ContentTypeError:
         return 'JSON decode failed', 0, request_num
 
-    # Other kind of errors (e.g, coming from Exponea)?
     except Exception as e:
         return str(e), request_num
 
