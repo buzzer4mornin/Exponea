@@ -48,7 +48,7 @@ async def send_request(connector: aiohttp.TCPConnector, timeout: int, request_nu
 
 
 @app.get("/api/smart/{ENDPOINT_TIMEOUT}")
-async def api_smart(ENDPOINT_TIMEOUT) -> dict:
+async def api_smart(ENDPOINT_TIMEOUT: int) -> dict:
     try:
         ENDPOINT_TIMEOUT = int(ENDPOINT_TIMEOUT)
     except ValueError:
@@ -97,6 +97,8 @@ async def api_smart(ENDPOINT_TIMEOUT) -> dict:
             if status == 200:
                 earliest_resp["status"] = "SUCCESS"
                 return earliest_resp
-
+            elif earliest_resp == "Timeout Error":  #### ADJUST AND ADD TO REPORT
+                print("ENDPOINT TIMEOUT EXCEEDED")  #### ADJUST AND ADD TO REPORT
+                return {"message": "ERROR"}
         # ERROR! There is no successfull response within ENDPOINT_TIMEOUT!
         return {"message": "ERROR"}
