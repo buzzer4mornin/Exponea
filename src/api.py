@@ -48,7 +48,7 @@ async def send_request(connector: aiohttp.TCPConnector, timeout: int):
 
 
 @app.get("/api/smart/{ENDPOINT_TIMEOUT}")
-async def api_smart(ENDPOINT_TIMEOUT: int) -> dict:
+async def api_smart(ENDPOINT_TIMEOUT) -> dict:
     try:
         ENDPOINT_TIMEOUT = int(ENDPOINT_TIMEOUT)
     except ValueError:
@@ -79,7 +79,7 @@ async def api_smart(ENDPOINT_TIMEOUT: int) -> dict:
             raise asyncio.exceptions.TimeoutError
 
     except asyncio.exceptions.TimeoutError:
-        # Either {300ms timeout exceeded with no response from first request.} or {First request finished but is NOT SUCCESSFUL within 300ms.}
+        # Either {300ms timeout exceeded with no response from first request} or {First request finished but is NOT SUCCESSFUL within 300ms}
         ssl_context_2 = ssl.create_default_context(cafile=certifi.where())
         ssl_context_3 = ssl.create_default_context(cafile=certifi.where())
         conn_2 = aiohttp.TCPConnector(limit=100, ssl=ssl_context_2)
@@ -96,8 +96,7 @@ async def api_smart(ENDPOINT_TIMEOUT: int) -> dict:
             if status == 200:
                 earliest_resp["status"] = "SUCCESS"
                 return earliest_resp
-            elif earliest_resp == "Timeout Error":  #### ADJUST AND ADD TO REPORT
-            #    # print("ENDPOINT TIMEOUT EXCEEDED")  #### ADJUST AND ADD TO REPORT
+            elif earliest_resp == "Timeout Error":
                 return {"message": "ERROR"}
 
         # ERROR! There is no successfull response within ENDPOINT_TIMEOUT!
