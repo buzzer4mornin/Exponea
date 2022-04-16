@@ -70,7 +70,7 @@ async def api_smart(ENDPOINT_TIMEOUT) -> dict:
         start = time()
         resp, status, which_request = await asyncio.wait_for(asyncio.shield(request_1), timeout=300 / 1000)
         if status == 200:
-            print("First request is SUCCESSFUL within 300ms.")
+            print("First request finished and is SUCCESSFUL within 300ms.")
             print(which_request, "--->", resp)
             resp["message"] = "SUCCESS"
             return resp
