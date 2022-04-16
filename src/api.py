@@ -31,7 +31,6 @@ async def send_request(connector: aiohttp.TCPConnector, timeout: int, request_nu
     except asyncio.exceptions.CancelledError:
         return 'Task got cancelled', 0, request_num
 
-    # Api response internal error
     except json.decoder.JSONDecodeError:
         '''
             <Response [500 Internal Server Error]>
@@ -39,11 +38,9 @@ async def send_request(connector: aiohttp.TCPConnector, timeout: int, request_nu
         '''
         return 'Exponea server error [500 or 429]', 0, request_num
 
-    # When failing to decode JSON
     except aiohttp.client_exceptions.ContentTypeError:
         return 'JSON decode failed', 0, request_num
 
-    # Other kind of errors (e.g, coming from Exponea)?
     except Exception as e:
         return str(e), request_num
 
@@ -58,17 +55,20 @@ async def api_smart(ENDPOINT_TIMEOUT) -> dict:
     if ENDPOINT_TIMEOUT <= 300:
         return {"message": "Endpoint timeout parameter should be above 300"}
 
-    # default is 300ms
+    # need this for properly adjusting timeout of second and third request
     time_spent = 300
-    # bool to check if first request is finished and NOT SUCCESSFUL within 300ms
+
+    # [FOR PRINTING] bool to check if first request is finished and NOT SUCCESSFUL within 300ms
     flag = False
+
     try:
-        print("Fired first request and waiting 300ms for its response..")
         ssl_context = ssl.create_default_context(cafile=certifi.where())
         conn_1 = aiohttp.TCPConnector(ssl=ssl_context)
         request_1 = asyncio.create_task(send_request(connector=conn_1, timeout=aiohttp.ClientTimeout(total=ENDPOINT_TIMEOUT / 1000), request_num="request_1"))
         start = time()
+        print("Fired first request and waiting 300ms for its response..")
         resp, status, which_request = await asyncio.wait_for(asyncio.shield(request_1), timeout=300 / 1000)
+
         if status == 200:
             print("First request finished and is SUCCESSFUL within 300ms.")
             print(which_request, "--->", resp)
