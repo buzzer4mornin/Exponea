@@ -1,5 +1,3 @@
-import attr
-from ratelimiter import RateLimiter
 import json
 import aiohttp
 import asyncio
@@ -65,7 +63,7 @@ async def api_smart(ENDPOINT_TIMEOUT) -> dict:
         ssl_context = ssl.create_default_context(cafile=certifi.where())
         conn_1 = aiohttp.TCPConnector(limit=100, ssl=ssl_context)
 
-        # send and wait for response 300ms. Shield protects request from being cancelled by wait_for timeout
+        # send and wait for response 300ms. Shield protects request from being cancelled by wait_for
         request_1 = asyncio.create_task(
             send_request(connector=conn_1, timeout=aiohttp.ClientTimeout(total=ENDPOINT_TIMEOUT / 1000)))
         start = time()
