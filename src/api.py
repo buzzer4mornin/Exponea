@@ -97,7 +97,8 @@ async def api_smart(ENDPOINT_TIMEOUT) -> dict:
                 earliest_resp["status"] = "SUCCESS"
                 return earliest_resp
             elif earliest_resp == "Timeout Error":
+                # ERROR! api_smart() exceeds ENDPOINT_TIMEOUT.There is no successfull response within ENDPOINT_TIMEOUT!
                 return {"message": "ERROR"}
 
-        # ERROR! There is no successfull response within ENDPOINT_TIMEOUT!
+        # ERROR! All requests are finished within ENDPOINT_TIMEOUT but there is no successfull response!
         return {"message": "ERROR"}
