@@ -5,6 +5,7 @@ import certifi
 import ssl
 from fastapi import FastAPI
 from time import time
+
 app = FastAPI()
 
 
