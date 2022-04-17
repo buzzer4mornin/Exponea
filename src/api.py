@@ -61,7 +61,7 @@ async def api_smart(ENDPOINT_TIMEOUT) -> dict:
     try:
         # prepare first request
         ssl_context = ssl.create_default_context(cafile=certifi.where())
-        conn_1 = aiohttp.TCPConnector(limit=100, ssl=ssl_context)
+        conn_1 = aiohttp.TCPConnector(ssl=ssl_context)
 
         # send and wait for response 300ms. Shield protects request from being cancelled by wait_for's timeout
         request_1 = asyncio.create_task(
@@ -84,8 +84,8 @@ async def api_smart(ENDPOINT_TIMEOUT) -> dict:
         #   or   {first request finished but is NOT SUCCESSFUL within 300ms}
         ssl_context_2 = ssl.create_default_context(cafile=certifi.where())
         ssl_context_3 = ssl.create_default_context(cafile=certifi.where())
-        conn_2 = aiohttp.TCPConnector(limit=100, ssl=ssl_context_2)
-        conn_3 = aiohttp.TCPConnector(limit=100, ssl=ssl_context_3)
+        conn_2 = aiohttp.TCPConnector(ssl=ssl_context_2)
+        conn_3 = aiohttp.TCPConnector(ssl=ssl_context_3)
 
         # prepare second and third request
         request_2 = asyncio.create_task(
