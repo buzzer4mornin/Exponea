@@ -1,6 +1,5 @@
 import json
 import aiohttp
-import httpx
 import asyncio
 import certifi
 import ssl
@@ -67,7 +66,7 @@ async def api_smart(ENDPOINT_TIMEOUT) -> dict:
         request_1 = asyncio.create_task(send_request(connector=conn_1, timeout=aiohttp.ClientTimeout(total=ENDPOINT_TIMEOUT / 1000), request_num="request_1"))
         start = time()
         print("Fired first request and waiting 300ms for its response..")
-        resp, status, which_request = await asyncio.wait_for(asyncio.shield(request_1), timeout=300 / 1000)
+        resp, status, which_request = await asyncio.wait_for(asyncio.shield(request_1), timeout=500 / 1000)
 
         if status == 200:
             print("First request finished and is SUCCESSFUL within 300ms.")
