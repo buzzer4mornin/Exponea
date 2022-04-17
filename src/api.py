@@ -99,7 +99,7 @@ async def api_smart(ENDPOINT_TIMEOUT) -> dict:
             if status == 200:
                 # received earliest successful response.
                 # add success message to json response and return it
-                earliest_resp["status"] = "SUCCESS"
+                earliest_resp["message"] = "SUCCESS"
                 return earliest_resp
             elif earliest_resp == "Timeout Error":
                 # api_smart() exceeds ENDPOINT_TIMEOUT. No successfull response within ENDPOINT_TIMEOUT!
