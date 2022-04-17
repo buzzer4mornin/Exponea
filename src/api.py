@@ -67,7 +67,7 @@ async def api_smart(ENDPOINT_TIMEOUT) -> dict:
         request_1 = asyncio.create_task(
             send_request(connector=conn_1, timeout=aiohttp.ClientTimeout(total=ENDPOINT_TIMEOUT / 1000)))
         start = time()
-        resp, status = await asyncio.wait_for(asyncio.shield(request_1), timeout=1000 / 1000)
+        resp, status = await asyncio.wait_for(asyncio.shield(request_1), timeout=300 / 1000)
 
         if status == 200:
             # first request finished and is SUCCESSFUL within 300ms
