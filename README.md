@@ -2,6 +2,8 @@
 
 This app was build using Fastapi
 
+Please refer to **Test_report.pdf** for code discussion / case studies / empirical studies and performance bencharmking.
+
 
 ## Getting started
 
