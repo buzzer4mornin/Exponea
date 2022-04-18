@@ -93,7 +93,7 @@ async def api_smart(ENDPOINT_TIMEOUT) -> dict:
         request_3 = asyncio.create_task(
             send_request(connector=conn_3, timeout=aiohttp.ClientTimeout(total=(ENDPOINT_TIMEOUT - time_spent) / 1000)))
 
-        # send second and third request, and process requests greedily as they finish
+        # send second and third request concurrently, and process requests greedily as they finish
         for request in asyncio.as_completed([request_1, request_2, request_3]):
             earliest_resp, status = await request
             if status == 200:
