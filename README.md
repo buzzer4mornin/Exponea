@@ -35,3 +35,7 @@ Then you can just run the api by sending request to the following url
 Note that if you used the code as-is with the `--reload` option that you won't be able to kill the container using `CTRL + C`.  
 Instead in another terminal window you can kill the container using Docker's kill command:  
 `docker kill fastapi_app`
+
+Notes:
+run `docker ps -a` to see all containers.
+run `run docker fastapi-image` to run the image that is already in created container. 
