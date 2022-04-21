@@ -37,5 +37,16 @@ Instead in another terminal window you can kill the container using Docker's kil
 `docker kill fastapi_app`
 
 Notes:
-run `docker ps -a` to see all containers.
-run `run docker fastapi-image` to run the image that is already in created container. 
+
+`docker ps -a` - see all containers
+
+`docker start fastapi_app` - start container
+
+`docker stop fastapi_app` - stop container
+
+`docker rm -f $(docker ps -a -q)` - delete all containers
+
+`docer image ls` - see all images
+
+`docker run -p 8000:8000 --name fastapi_app fastapi-image` - after being sure the image is not run in any container
+
